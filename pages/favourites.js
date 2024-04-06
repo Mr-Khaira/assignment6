@@ -6,7 +6,8 @@ import ArtworkCard from "@/components/ArtworkCard";
 
 export default function Favourites() {
   const [favouritesList] = useAtom(favouritesAtom);
-  //console.log("The fav list in the favourites file, ", favouritesList);
+
+  if (!favouritesList) return null; // Return null if favourites list is not yet available
 
   return (
     <Container>

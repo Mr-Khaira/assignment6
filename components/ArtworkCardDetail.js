@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Error from "next/error";
@@ -6,42 +6,45 @@ import useSWR from "swr";
 
 import { useAtom } from "jotai";
 import { favouritesAtom } from "@/store";
+import { addToFavourites, removeFromFavourites } from "@/lib/userData";
 
 const fetcher = async (url) => {
   try {
     const resp = await fetch(url);
-    // console.log(resp);
     const data = await resp.json();
     if (!resp.ok) {
-      <Error statusCode={404} />;
-      return null;
-    } else {
-      return data;
+      throw new Error("Failed to fetch data");
     }
+    return data;
   } catch (error) {
     console.log("This error is in the ArtworkCardDetail file", error);
+    return null;
   }
 };
 
 export default function ArtworkCardDetail({ objectID }) {
   const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
-  const [showAdded, setShowAdded] = useState(
-    favouritesList.includes(objectID) ? true : false
-  );
-  console.log("This is my fav list", favouritesList);
+  const [showAdded, setShowAdded] = useState(false);
 
-  function favouritesClicked() {
-    if (showAdded) {
-      setFavouritesList((current) => current.filter((fav) => fav !== objectID));
-    } else {
-      setFavouritesList((current) => [...current, objectID]);
+  useEffect(() => {
+    setShowAdded(favouritesList?.includes(objectID));
+  }, [favouritesList, objectID]);
+
+  async function favouritesClicked() {
+    try {
+      if (showAdded) {
+        await removeFromFavourites(objectID);
+      } else {
+        await addToFavourites(objectID);
+      }
+      setFavouritesList(await getFavourites());
+      setShowAdded(!showAdded);
+    } catch (error) {
+      console.error("Error updating favourites:", error);
     }
-    setShowAdded(!showAdded);
   }
 
   const myObjId = parseInt(objectID);
-  // console.log(myObjId);
-  // const url = `https://collectionapi.metmuseum.org/public/collection/v1/objects/${myObjId}`;
 
   const { data, error } = useSWR(
     myObjId
@@ -49,7 +52,7 @@ export default function ArtworkCardDetail({ objectID }) {
       : null,
     fetcher
   );
-  // console.log(data);
+
   if (error) {
     return <Error statusCode={404} />;
   }
@@ -69,7 +72,7 @@ export default function ArtworkCardDetail({ objectID }) {
           Artist:
           {data?.artistDisplayName ? (
             <>
-              data.artistDisplayName (
+              {data.artistDisplayName} (
               <a
                 href={data.artistWikidata_URL}
                 target="_blank"

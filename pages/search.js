@@ -5,6 +5,7 @@ import Button from "react-bootstrap/Button";
 import { useRouter } from "next/router";
 import { useAtom } from "jotai";
 import { searchHistoryAtom } from "@/store";
+import { addToHistory } from "@/lib/userData"; // Importing addToHistory function
 
 export default function Search() {
   const router = useRouter();
@@ -17,14 +18,15 @@ export default function Search() {
     formState: { errors },
   } = useForm();
 
-  const submitForm = (data) => {
+  const submitForm = async (data) => {
+    // Making the function asynchronous
     let queryString = `tags=${data.searchBy}&geoLocation=${
       data.geoLocation || ""
     }&medium=${data.medium || ""}&isOnView=${data.isOnView}&isHighlight=${
       data.isHighlight
     }&q=${data.q}`;
     router.push(`/artwork?${queryString}`);
-    setSearchHistory((current) => [...current, queryString]);
+    setSearchHistory(await addToHistory(queryString)); // Updating the atom value
   };
 
   return (

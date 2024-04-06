@@ -4,6 +4,7 @@ import { useAtom } from "jotai";
 import { useRouter } from "next/router";
 import { Button, Card, ListGroup } from "react-bootstrap";
 import styles from "@/styles/History.module.css";
+import { removeFromHistory } from "@/lib/userData"; // Importing removeFromHistory function
 
 export default function History() {
   const router = useRouter();
@@ -18,20 +19,18 @@ export default function History() {
   });
 
   // Function to handle history item click
-  function historyClicked(e, index) {
+  async function historyClicked(e, index) {
     e.preventDefault();
     router.push(`/artwork?searchHistory[${index}]`);
   }
 
   // Function to remove history item
-  function removeHistoryClicked(e, index) {
+  async function removeHistoryClicked(e, index) {
     e.stopPropagation(); // stop the event from triggering other events
-    setSearchHistory((current) => {
-      let x = [...current];
-      x.splice(index, 1);
-      return x;
-    });
+    setSearchHistory(await removeFromHistory(searchHistory[index])); // Update the atom value
   }
+
+  if (!searchHistory) return null; // Check if search history is not yet loaded
 
   return (
     <div>
